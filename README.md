@@ -84,6 +84,16 @@ uv run garmin-mcp-auth --verify
 
 **Note:** This will create a local file at `~/.garminconnect` with your Garmin Connect tokens. The MCP server will read from this file to authenticate API requests. These tokens will have a one year lifespan. 
 
+Garmin’s official API program is available for Business only and not for individual developers to access. I tried to get access to the official API but was denied because I'm doing this as a Open Source individual project. The `garminconnect` library uses reverse-engineered API endpoints and relies on OAuth tokens obtained through the Garmin Connect web/mobile login flow. The `garmin-mcp-auth` tool is a workaround to obtain these tokens for use with the MCP server, but it is not an official or long-term solution.
+
+The Garth library does OAuth impersonation by pretending to be a mobile APP rather than the web client.
+The Garmin Workouts MCP depends on the Garmin connect library and that uses the Garth library for authentication, which relies on long lived OAuth tokens. The `garmin-mcp-auth` tool is a one-time setup utility that prompts you for your Garmin Connect credentials and MFA code (if enabled) to obtain these tokens. The tokens are then saved locally and used by the MCP server for authentication when making API requests to Garmin Connect.
+
+> [!WARNING]  
+> Here be dragons 🐉. 
+> Long Lived Tokens are a security risk and against OAuth's best practices, but is a limitation of the underlying `garminconnect` library. Use with caution and be aware of the security implications.
+> For this reason I've restricted the scope of the MCP server to only the necessary API endpoints (read-only for activities and workout templates, read-write for workouts) to minimize potential risks.
+> I'm working on an alternative using short lived tokens with automatic refresh.
 
 ### Usage with Claude Desktop
 #### Step 2: Configure Claude Desktop
