@@ -35,9 +35,37 @@ Once connected in Claude Desktop/VS Code Copilot, you can ask questions like:
 
 This MCP server implements tools for the following domains:
 
-- ✅ Activity Management (14 tools)
-- ✅ Workouts (8 tools)
-- ✅ Workout Templates (MCP resources)
+- ✅ **Activity Management** — 13 read-only tools 🏃
+  - 📋 `get_activities` — list activities with pagination support (newest first)
+  - 📅 `get_activities_by_date` — list activities between two dates, optionally filtered by type
+  - 📅 `get_activities_fordate` — list activities recorded on a specific date
+  - 🔍 `get_activity` — get detailed information for a single activity
+  - 📊 `get_activity_splits` — get lap/split data for an activity
+  - 📊 `get_activity_typed_splits` — get typed splits (run/walk/etc.) for an activity
+  - 📊 `get_activity_split_summaries` — get split summary statistics for an activity
+  - 🌤️ `get_activity_weather` — get weather conditions recorded during an activity
+  - ❤️ `get_activity_hr_in_timezones` — get heart rate distribution across HR zones for an activity
+  - 👟 `get_activity_gear` — get gear (shoes, bike, etc.) used for an activity
+  - 🏋️ `get_activity_exercise_sets` — get exercise sets for strength training activities
+  - 🏷️ `get_activity_types` — list all activity types supported by Garmin Connect
+  - 🔢 `count_activities` — get the total number of activities in the account
+
+- ✅ **Workouts** — 8 read/write tools 💪
+  - 📋 `get_workouts` — list all workouts in the Garmin Connect workout library
+  - 🔍 `get_workout_by_id` — get full details for a workout by numeric ID or UUID
+  - ⬆️ `upload_workout` — create a new workout from structured JSON data
+  - 🗑️ `delete_workout` — permanently delete a workout from the library
+  - 📅 `schedule_workout` — schedule a workout to a specific calendar date
+  - 📅 `get_scheduled_workouts` — list workouts scheduled on the calendar between two dates
+  - 🗓️ `get_training_plan_workouts` — get Garmin Coach / training plan workouts for a given week
+  - ⬇️ `download_workout` — download a workout in FIT file format
+
+- ✅ **Workout Templates** — 5 MCP resources 📂
+  - 🏃 `workout://templates/simple-run` — basic warmup / run / cooldown structure
+  - ⚡ `workout://templates/interval-running` — interval training with repeat groups (6×400 m)
+  - 🎯 `workout://templates/tempo-run` — tempo run targeting a heart rate zone
+  - 🏋️ `workout://templates/strength-circuit` — strength training circuit with repeat groups
+  - 📖 `workout://reference/structure` — complete JSON structure reference for building workouts
 
 ### OAuth Scope Notes
 
