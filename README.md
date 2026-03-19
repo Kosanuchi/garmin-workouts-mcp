@@ -15,6 +15,22 @@ Garmin's API is accessed via the [python-garminconnect](https://github.com/cyber
 - Access workouts and training plans
 - Browse workout templates
 
+## Usage Examples
+
+Once connected in Claude Desktop/VS Code, you can ask questions like:
+
+### Basic queries:
+- "Show me the details of my latest run"
+- "Create a workout plan for next week based on my recent activities"
+- "When is my next scheduled workout?"
+### Ai Coach assisted queries:
+- "What are some workout templates I can use to improve my 5k time?"
+- "Create a workout plan with 30min easy run at conversational pace"
+- "Create a workout plan with 5km tempo run at 5:15 min/km pace"
+- "Create a workout plan with intervals: 6×400 m @ 4:10–4:20/km, 90s recovery (include 15 min warm-up/cool-down)"
+- "Based on my recent activities, what workouts should I do this week to prepare for a half marathon?"
+- "Create a workout plan for the next Hackney Half Marathon based on my recent activities, with a goal to run it in under 1h45."
+
 ### Tool Coverage
 
 This MCP server implements tools for the following domains:
@@ -36,8 +52,8 @@ by design:
 
 ## Setup
 
-### Quick Start 
-TODO
+### Security considerations
+the secret management can be considered insecure specially the use of long lived OAuth access tokens. We are working on alternatives such as short lived tokens with automatic refresh, or integration with external secret managers. In the meantime, you must pre-authenticate to obtain the necessary tokens for the server to function. Use this tool at your own discretion and be aware of the security implications of storing credentials and tokens on your machine. However the scopes of the tokens are limited to read-only access for activities and workout templates, and read-write access for workouts, which minimizes potential risks.
 
 #### Prerequisites
 
@@ -45,16 +61,13 @@ TODO
 - Garmin Connect account
 - MFA may be required if enabled on your account
 
-### Security considerations
-the secret management can be considered insecure specially the use of long lived OAuth access tokens. We are working on alternatives such as short lived tokens with automatic refresh, or integration with external secret managers. In the meantime, you must pre-authenticate to obtain the necessary tokens for the server to function. Use this tool at your own discretion and be aware of the security implications of storing credentials and tokens on your machine. However the scopes of the tokens are limited to read-only access for activities and workout templates, and read-write access for workouts, which minimizes potential risks.
-
 #### Step 1: Pre-authenticate (One-time)
 Before adding to GitHub Copilot on VSCode, authenticate once in your terminal:
 
 ```bash
 
 # Install and run authentication tool
-uvx --python 3.12 --from git+https://github.com/brunosantos/garmin_mcp garmin-mcp-auth
+uvx --python 3.12 --from git+https://github.com/brunosantos/garmin-workouts-mcp garmin-mcp-auth
 
 # You'll be prompted for:
 # - Email (or set GARMIN_EMAIL env var)
@@ -69,14 +82,13 @@ You can verify your credentials at any time with
 uv run garmin-mcp-auth --verify
 ```
 
-**Note:** You can also set credentials via environment variables:
-```bash
-GARMIN_EMAIL=your@email.com GARMIN_PASSWORD=secret garmin-mcp-auth
-```
+**Note:** This will create a local file at `~/.garminconnect` with your Garmin Connect tokens. The MCP server will read from this file to authenticate API requests. These tokens will have a one year lifespan. 
 
-If you don't have MFA enabled you can also skip `garmin-mcp-auth` and pass `GARMIN_EMAIL` and `GARMIN_PASSWORD` as env variables directly to Claude Desktop (or other MCP client, if supported), see below for an example.
 
+### Usage with Claude Desktop
 #### Step 2: Configure Claude Desktop
+
+> **Prerequisite:** Complete [Step 1: Pre-authenticate](#step-1-pre-authenticate-one-time) before configuring Claude Desktop.
 
 Add to your Claude Desktop MCP settings **WITHOUT** credentials:
 
@@ -92,7 +104,7 @@ Add to your Claude Desktop MCP settings **WITHOUT** credentials:
         "--python",
         "3.12",
         "--from",
-        "git+https://github.com/brunosantos/garmin_workouts_mcp",
+        "git+https://github.com/brunosantos/garmin-workouts-mcp",
         "garmin-workouts-mcp"
       ]
     }
@@ -102,9 +114,8 @@ Add to your Claude Desktop MCP settings **WITHOUT** credentials:
 
 **Important:** No `GARMIN_EMAIL` or `GARMIN_PASSWORD` needed in config! The server uses your saved tokens.
 
-#### Step 3: Restart VSCode
-#TODO replace refs to Claude to Copilot...
-Your Garmin data is now available in VSCode Copilot!
+#### Step 3: Restart Claude Desktop
+Your Garmin data is now available in Claude Desktop !
 
 ---
 
@@ -133,7 +144,7 @@ For manual installation, you can configure the MCP server using one of these met
         "--python",
         "3.12",
         "--from",
-        "git+https://github.com/brunosantos/garmin_workouts_mcp",
+        "git+https://github.com/brunosantos/garmin-workouts-mcp",
         "garmin-workouts-mcp"
       ]
     }
@@ -158,7 +169,7 @@ For manual installation, you can configure the MCP server using one of these met
       "command": "uv",
       "args": [
         "--directory",
-        "<full path to your local repository>/garmin_workouts_mcp",
+        "<full path to your local repository>/garmin-workouts-mcp",
         "run",
         "garmin-workouts-mcp"
       ]
@@ -179,13 +190,6 @@ npx @modelcontextprotocol/inspector uv run garmin--workouts-mcp
 
 You'll be able to inspect and test the tools.
 
-
-## Usage Examples
-
-Once connected in Claude, you can ask questions like:
-
-- "Show me the details of my latest run"
-- "Create a workout plan for next week based on my recent activities"
 
 ### Login Issues
 
