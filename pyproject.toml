@@ -16,6 +16,8 @@ dependencies = [
     "garth>=0.5.17,<0.6.0",
 ]
 
+keywords = ["garmin", "garmin connect", "mcp"]
+
 [project.scripts]
 garmin-workouts-mcp = "garmin_workouts_mcp:main"
 garmin-mcp-auth = "garmin_workouts_mcp.auth_cli:main"
