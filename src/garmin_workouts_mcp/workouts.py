@@ -551,4 +551,68 @@ def register_tools(app):
         except Exception as e:
             return f"Error scheduling workout: {str(e)}"
 
+    @app.tool()
+    async def schedule_workouts(schedules: list[dict]) -> str:
+        """Schedule multiple workouts to specific calendar dates
+
+        This adds multiple existing workouts from your Garmin workout library
+        to your Garmin Connect calendar in a single call.
+
+        Args:
+            schedules: List of workout schedules, each with:
+                - workout_id (int): ID of the workout to schedule (get IDs from get_workouts)
+                - calendar_date (str): Date to schedule the workout in YYYY-MM-DD format
+
+        Example:
+            [{"workout_id": 123456, "calendar_date": "2024-01-15"},
+             {"workout_id": 789012, "calendar_date": "2024-01-17"}]
+        """
+        results = []
+        for item in schedules:
+            workout_id = item.get("workout_id")
+            calendar_date = item.get("calendar_date")
+            if workout_id is None or calendar_date is None:
+                results.append({
+                    "status": "failed",
+                    "workout_id": workout_id,
+                    "scheduled_date": calendar_date,
+                    "message": "Missing required fields: workout_id and calendar_date"
+                })
+                continue
+            try:
+                url = f"workout-service/schedule/{workout_id}"
+                response = garmin_client.garth.post("connectapi", url, json={"date": calendar_date})
+
+                if response.status_code == 200:
+                    results.append({
+                        "status": "success",
+                        "workout_id": workout_id,
+                        "scheduled_date": calendar_date,
+                        "message": f"Successfully scheduled workout {workout_id} for {calendar_date}"
+                    })
+                else:
+                    results.append({
+                        "status": "failed",
+                        "workout_id": workout_id,
+                        "scheduled_date": calendar_date,
+                        "http_status": response.status_code,
+                        "message": f"Failed to schedule workout: HTTP {response.status_code}"
+                    })
+            except Exception as e:
+                results.append({
+                    "status": "error",
+                    "workout_id": workout_id,
+                    "scheduled_date": calendar_date,
+                    "message": f"Error scheduling workout: {str(e)}"
+                })
+
+        total = len(results)
+        succeeded = sum(1 for r in results if r["status"] == "success")
+        return json.dumps({
+            "total": total,
+            "succeeded": succeeded,
+            "failed": total - succeeded,
+            "results": results
+        }, indent=2)
+
     return app

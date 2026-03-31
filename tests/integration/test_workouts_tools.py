@@ -541,3 +541,133 @@ async def test_upload_workout_exception(app_with_workouts, mock_garmin_client):
 
     # Verify error is handled gracefully
     assert result is not None
+
+
+# schedule_workouts tests
+@pytest.mark.asyncio
+async def test_schedule_workouts_single(app_with_workouts, mock_garmin_client):
+    """Test schedule_workouts with a single workout"""
+    import json as json_module
+    from unittest.mock import MagicMock
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_garmin_client.garth.post.return_value = mock_response
+
+    result = await app_with_workouts.call_tool(
+        "schedule_workouts",
+        {"schedules": [{"workout_id": 123456, "calendar_date": "2024-01-15"}]}
+    )
+
+    assert result is not None
+    result_data = json_module.loads(result[0][0].text)
+    assert result_data["total"] == 1
+    assert result_data["succeeded"] == 1
+    assert result_data["failed"] == 0
+    assert result_data["results"][0]["status"] == "success"
+    assert result_data["results"][0]["workout_id"] == 123456
+    assert result_data["results"][0]["scheduled_date"] == "2024-01-15"
+    mock_garmin_client.garth.post.assert_called_once_with(
+        "connectapi", "workout-service/schedule/123456", json={"date": "2024-01-15"}
+    )
+
+
+@pytest.mark.asyncio
+async def test_schedule_workouts_multiple(app_with_workouts, mock_garmin_client):
+    """Test schedule_workouts with multiple workouts"""
+    import json as json_module
+    from unittest.mock import MagicMock
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_garmin_client.garth.post.return_value = mock_response
+
+    schedules = [
+        {"workout_id": 111, "calendar_date": "2024-01-15"},
+        {"workout_id": 222, "calendar_date": "2024-01-17"},
+        {"workout_id": 333, "calendar_date": "2024-01-19"},
+    ]
+    result = await app_with_workouts.call_tool(
+        "schedule_workouts",
+        {"schedules": schedules}
+    )
+
+    assert result is not None
+    result_data = json_module.loads(result[0][0].text)
+    assert result_data["total"] == 3
+    assert result_data["succeeded"] == 3
+    assert result_data["failed"] == 0
+    assert mock_garmin_client.garth.post.call_count == 3
+
+
+@pytest.mark.asyncio
+async def test_schedule_workouts_partial_failure(app_with_workouts, mock_garmin_client):
+    """Test schedule_workouts when some workouts fail"""
+    import json as json_module
+    from unittest.mock import MagicMock
+
+    ok_response = MagicMock()
+    ok_response.status_code = 200
+    err_response = MagicMock()
+    err_response.status_code = 404
+
+    mock_garmin_client.garth.post.side_effect = [ok_response, err_response]
+
+    schedules = [
+        {"workout_id": 111, "calendar_date": "2024-01-15"},
+        {"workout_id": 999, "calendar_date": "2024-01-17"},
+    ]
+    result = await app_with_workouts.call_tool(
+        "schedule_workouts",
+        {"schedules": schedules}
+    )
+
+    assert result is not None
+    result_data = json_module.loads(result[0][0].text)
+    assert result_data["total"] == 2
+    assert result_data["succeeded"] == 1
+    assert result_data["failed"] == 1
+    assert result_data["results"][0]["status"] == "success"
+    assert result_data["results"][1]["status"] == "failed"
+    assert result_data["results"][1]["http_status"] == 404
+
+
+@pytest.mark.asyncio
+async def test_schedule_workouts_missing_fields(app_with_workouts, mock_garmin_client):
+    """Test schedule_workouts with missing required fields"""
+    import json as json_module
+
+    result = await app_with_workouts.call_tool(
+        "schedule_workouts",
+        {"schedules": [{"workout_id": 123456}]}  # missing calendar_date
+    )
+
+    assert result is not None
+    result_data = json_module.loads(result[0][0].text)
+    assert result_data["total"] == 1
+    assert result_data["succeeded"] == 0
+    assert result_data["failed"] == 1
+    assert result_data["results"][0]["status"] == "failed"
+    assert "Missing required fields" in result_data["results"][0]["message"]
+    mock_garmin_client.garth.post.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_schedule_workouts_exception(app_with_workouts, mock_garmin_client):
+    """Test schedule_workouts when an exception is raised"""
+    import json as json_module
+
+    mock_garmin_client.garth.post.side_effect = Exception("Network error")
+
+    result = await app_with_workouts.call_tool(
+        "schedule_workouts",
+        {"schedules": [{"workout_id": 123456, "calendar_date": "2024-01-15"}]}
+    )
+
+    assert result is not None
+    result_data = json_module.loads(result[0][0].text)
+    assert result_data["total"] == 1
+    assert result_data["succeeded"] == 0
+    assert result_data["failed"] == 1
+    assert result_data["results"][0]["status"] == "error"
+    assert "Network error" in result_data["results"][0]["message"]
